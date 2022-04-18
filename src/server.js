@@ -18,9 +18,11 @@ const server = http.createServer(app);
 const webSocketServer = new WebSocket.Server({ server });
 // 3000포트에서 http와 ws 모두 사용 가능
 
-webSocketServer.on("connection", handleConnection);
-server.listen(3000, handleListen);
+webSocketServer.on("connection", (socket) => {
+  console.log("Connected to Browser!");
+  socket.on("close", () => console.log("Disconnected to Browser!"));
+  socket.on("message", (msg) => console.log(msg.toString("utf8")));
+  socket.send("Hello client!");
+});
 
-function handleConnection(socket) {
-  console.log(socket);
-}
+server.listen(3000, handleListen);
