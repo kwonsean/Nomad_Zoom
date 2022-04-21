@@ -23,10 +23,15 @@ const io = new Server(httpServer);
 // socket.io를 사용하여 이벤트 커스텀이 가능하고 객체를 받을수 있다.
 // 또한 함수를 받아서 실행시킬 수 있다. (프론트에서 실행됨)
 io.on("connection", (socket) => {
-  console.log(socket);
-  socket.on("enter_room", (roomName, callback) => {
-    console.log(roomName);
-    callback("HI CLIENT!"); // 프론트에서 실행됨 (백엔드에서 실행되는 것은 보안문제 발생)
+  socket.onAny((event) => {
+    console.log("Socket Event: " + event);
+  });
+  socket.on("enter_room", (roomName, done) => {
+    socket.join(roomName);
+    socket.to(roomName).emit("welcome"); // 본인에게는 안보임
+    // console.log(socket.rooms);
+
+    done(); // 프론트에서 실행됨 (백엔드에서 실행되는 것은 보안문제 발생)
   });
 });
 
