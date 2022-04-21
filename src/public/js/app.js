@@ -1,46 +1,21 @@
-const $msgList = document.querySelector("ul");
-const $nickNameForm = document.querySelector("#nickName");
-const $msgForm = document.querySelector("#msg");
-const socket = new WebSocket(`ws://${window.location.host}`);
+const socket = io();
 
-function makeMsg(type, payload) {
-  const msg = { type, payload };
-  return JSON.stringify(msg);
-}
+const $welcome = document.getElementById("welcome");
+const $form = $welcome.querySelector("form");
 
-socket.addEventListener("open", () => {
-  console.log("Connected to server!");
-});
-
-// 서버에서 보낸 메시지 확인
-socket.addEventListener("message", (msg) => {
-  const li = document.createElement("li");
-  li.textContent = msg.data;
-  $msgList.appendChild(li);
-  console.log("New msg : " + msg.data);
-});
-
-socket.addEventListener("close", () => {
-  console.log("Disconnected from Server...");
-});
-
-// setTimeout(() => {
-//   socket.send("Hello Sever! It's browser~");
-// }, 5000);
-
-const handleSubmit = (e) => {
-  e.preventDefault();
-  const input = $msgForm.querySelector("input");
-  socket.send(makeMsg("newMsg", input.value));
-  input.value = "";
+// 백엔드에서 인수를 받을 수 있다.
+const backEndDone = (msg) => {
+  console.log("Back End msg: " + msg);
 };
 
-const handleNickSubmit = (e) => {
+// emit(이벤트 명, 객체, 콜백)
+// 이벤트명을 제외하고는 객체, 문자, 숫자 등 다양한 인자를 많이 보낼 수 있다.
+// 하지만 끝날때 실행됬으면 하는 함수는 꼭 마지막에 넣어주어야 한다.
+const handleRoomSubmit = (e) => {
   e.preventDefault();
-  const input = $nickNameForm.querySelector("input");
-  socket.send(makeMsg("nickName", input.value));
-  input.value = "";
+  const $input = $form.querySelector("input");
+  socket.emit("enter_room", $input.value, backEndDone);
+  $input.value = "";
 };
 
-$msgForm.addEventListener("submit", handleSubmit);
-$nickNameForm.addEventListener("submit", handleNickSubmit);
+$form.addEventListener("submit", handleRoomSubmit);
