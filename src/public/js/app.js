@@ -5,6 +5,7 @@ const $form = $welcome.querySelector("form");
 const $room = document.getElementById("room");
 const $roomName = $room.querySelector("h3");
 const $roomNickNameForm = document.querySelector("#nickName");
+const $leaveRoomBtn = document.querySelector("#leave");
 
 $room.hidden = true;
 
@@ -43,6 +44,11 @@ const showRoom = () => {
   $roomMsgForm.addEventListener("submit", handleMsgSubmit);
 };
 
+const hideRoom = () => {
+  $welcome.hidden = false;
+  $room.hidden = true;
+};
+
 // emit(이벤트 명, 객체, 콜백)
 // 이벤트명을 제외하고는 객체, 문자, 숫자 등 다양한 인자를 많이 보낼 수 있다.
 // 하지만 끝날때 실행됬으면 하는 함수는 꼭 마지막에 넣어주어야 한다.
@@ -54,8 +60,13 @@ const handleRoomSubmit = (e) => {
   $input.value = "";
 };
 
+const handleLeaveRoom = () => {
+  socket.emit("leave_room", roomName, hideRoom);
+};
+
 $form.addEventListener("submit", handleRoomSubmit);
 $roomNickNameForm.addEventListener("submit", handleNickNameSubmit);
+$leaveRoomBtn.addEventListener("click", handleLeaveRoom);
 
 socket.on("welcome", (newUser, userCount) => {
   $roomName.textContent = `Room ${roomName} (${userCount})`;

@@ -2,7 +2,7 @@ import express from "express";
 import http from "http";
 import WebSocket from "ws";
 import { Server } from "socket.io";
-import { disconnect } from "process";
+import { instrument } from "@socket.io/admin-ui";
 
 const app = express();
 
@@ -19,7 +19,17 @@ const handleListen = () => console.log("http://localhost:3000", "ws://localhost:
 const httpServer = http.createServer(app);
 // const webSocketServer = new WebSocket.Server({ httpServer });
 // 3000포트에서 http와 ws 모두 사용 가능
-const io = new Server(httpServer);
+
+// admin-ui 추가
+const io = new Server(httpServer, {
+  cors: {
+    origin: ["http://admin.socket.io"],
+    credentials: true,
+  },
+});
+instrument(io, {
+  auth: false,
+});
 
 function publicRooms() {
   const {
@@ -57,6 +67,13 @@ io.on("connection", (socket) => {
     // console.log(socket.rooms);
     done(); // 프론트에서 실행됨 (백엔드에서 실행되는 것은 보안문제 발생)
 
+    io.sockets.emit("room_change", publicRooms());
+  });
+
+  socket.on("leave_room", (roomName, done) => {
+    socket.rooms.forEach((room) => socket.to(room).emit("bye", socket.nickName, countRoom(room) - 1));
+    socket.leave(roomName);
+    done();
     io.sockets.emit("room_change", publicRooms());
   });
 
