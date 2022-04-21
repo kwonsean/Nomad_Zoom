@@ -26,12 +26,22 @@ io.on("connection", (socket) => {
   socket.onAny((event) => {
     console.log("Socket Event: " + event);
   });
+
   socket.on("enter_room", (roomName, done) => {
     socket.join(roomName);
     socket.to(roomName).emit("welcome"); // 본인에게는 안보임
     // console.log(socket.rooms);
 
     done(); // 프론트에서 실행됨 (백엔드에서 실행되는 것은 보안문제 발생)
+  });
+
+  socket.on("new_msg", (msg, roomName, done) => {
+    socket.to(roomName).emit("new_msg", msg);
+    done();
+  });
+
+  socket.on("disconnecting", () => {
+    socket.rooms.forEach((room) => socket.to(room).emit("bye"));
   });
 });
 
