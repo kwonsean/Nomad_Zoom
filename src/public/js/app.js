@@ -57,11 +57,13 @@ const handleRoomSubmit = (e) => {
 $form.addEventListener("submit", handleRoomSubmit);
 $roomNickNameForm.addEventListener("submit", handleNickNameSubmit);
 
-socket.on("welcome", (newUser) => {
+socket.on("welcome", (newUser, userCount) => {
+  $roomName.textContent = `Room ${roomName} (${userCount})`;
   addMsg(`${newUser} Joined!`);
 });
 
-socket.on("bye", (leftUser) => {
+socket.on("bye", (leftUser, userCount) => {
+  $roomName.textContent = `Room ${roomName} (${userCount})`;
   addMsg(`${leftUser} left...`);
 });
 

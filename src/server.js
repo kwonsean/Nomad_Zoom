@@ -38,6 +38,10 @@ function publicRooms() {
   return publicRooms;
 }
 
+function countRoom(roomName) {
+  return io.sockets.adapter.rooms.get(roomName)?.size;
+}
+
 // socket.io를 사용하여 이벤트 커스텀이 가능하고 객체를 받을수 있다.
 // 또한 함수를 받아서 실행시킬 수 있다. (프론트에서 실행됨)
 io.on("connection", (socket) => {
@@ -49,7 +53,7 @@ io.on("connection", (socket) => {
 
   socket.on("enter_room", (roomName, done) => {
     socket.join(roomName);
-    socket.to(roomName).emit("welcome", socket.nickName); // 본인에게는 안보임
+    socket.to(roomName).emit("welcome", socket.nickName, countRoom(roomName)); // 본인에게는 안보임
     // console.log(socket.rooms);
     done(); // 프론트에서 실행됨 (백엔드에서 실행되는 것은 보안문제 발생)
 
@@ -67,7 +71,7 @@ io.on("connection", (socket) => {
 
   // socket이 연결해지 되기 전에 실행
   socket.on("disconnecting", () => {
-    socket.rooms.forEach((room) => socket.to(room).emit("bye", socket.nickName));
+    socket.rooms.forEach((room) => socket.to(room).emit("bye", socket.nickName, countRoom(room) - 1));
   });
   socket.on("disconnect", () => {
     io.sockets.emit("room_change", publicRooms());
