@@ -2,6 +2,7 @@ import express from "express";
 import http from "http";
 import WebSocket from "ws";
 import { Server } from "socket.io";
+import { disconnect } from "process";
 
 const app = express();
 
@@ -20,11 +21,29 @@ const httpServer = http.createServer(app);
 // 3000포트에서 http와 ws 모두 사용 가능
 const io = new Server(httpServer);
 
+function publicRooms() {
+  const {
+    sockets: {
+      adapter: { sids, rooms },
+    },
+  } = io;
+  const publicRooms = [];
+
+  rooms.forEach((_, key) => {
+    if (sids.get(key) === undefined) {
+      publicRooms.push(key);
+    }
+  });
+
+  return publicRooms;
+}
+
 // socket.io를 사용하여 이벤트 커스텀이 가능하고 객체를 받을수 있다.
 // 또한 함수를 받아서 실행시킬 수 있다. (프론트에서 실행됨)
 io.on("connection", (socket) => {
   socket.nickName = "Anon";
   socket.onAny((event) => {
+    console.log(io.sockets.adapter);
     console.log("Socket Event: " + event);
   });
 
@@ -32,8 +51,9 @@ io.on("connection", (socket) => {
     socket.join(roomName);
     socket.to(roomName).emit("welcome", socket.nickName); // 본인에게는 안보임
     // console.log(socket.rooms);
-
     done(); // 프론트에서 실행됨 (백엔드에서 실행되는 것은 보안문제 발생)
+
+    io.sockets.emit("room_change", publicRooms());
   });
 
   socket.on("new_msg", (msg, roomName, done) => {
@@ -45,8 +65,12 @@ io.on("connection", (socket) => {
     socket.nickName = nickName;
   });
 
+  // socket이 연결해지 되기 전에 실행
   socket.on("disconnecting", () => {
     socket.rooms.forEach((room) => socket.to(room).emit("bye", socket.nickName));
+  });
+  socket.on("disconnect", () => {
+    io.sockets.emit("room_change", publicRooms());
   });
 });
 

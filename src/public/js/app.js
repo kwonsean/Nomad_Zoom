@@ -66,3 +66,16 @@ socket.on("bye", (leftUser) => {
 });
 
 socket.on("new_msg", addMsg);
+
+socket.on("room_change", (rooms) => {
+  const $roomList = $welcome.querySelector("ul");
+  $roomList.innerHTML = "";
+  if (rooms.length === 0) {
+    return;
+  }
+  rooms.forEach((room) => {
+    const li = document.createElement("li");
+    li.textContent = room;
+    $roomList.append(li);
+  });
+});
