@@ -4,6 +4,7 @@ const $welcome = document.getElementById("welcome");
 const $form = $welcome.querySelector("form");
 const $room = document.getElementById("room");
 const $roomName = $room.querySelector("h3");
+const $roomNickNameForm = document.querySelector("#nickName");
 
 $room.hidden = true;
 
@@ -18,12 +19,18 @@ const addMsg = (msg) => {
 
 const handleMsgSubmit = (e) => {
   e.preventDefault();
-  const $roomInput = $room.querySelector("input");
-  const value = $roomInput.value;
-  socket.emit("new_msg", $roomInput.value, roomName, () => {
+  const $roomMsgInput = $room.querySelector("#msg input");
+  const value = $roomMsgInput.value;
+  socket.emit("new_msg", $roomMsgInput.value, roomName, () => {
     addMsg("You : " + value);
   });
-  $roomInput.value = "";
+  $roomMsgInput.value = "";
+};
+
+const handleNickNameSubmit = (e) => {
+  e.preventDefault();
+  const $roomNickNameInput = $roomNickNameForm.querySelector("input");
+  socket.emit("nickName", $roomNickNameInput.value, roomName);
 };
 
 // 백엔드에서 인수를 받을 수 있다.
@@ -31,8 +38,9 @@ const showRoom = () => {
   $welcome.hidden = true;
   $room.hidden = false;
   $roomName.textContent = `Room ${roomName}`;
-  const $roomForm = $room.querySelector("form");
-  $roomForm.addEventListener("submit", handleMsgSubmit);
+  const $roomMsgForm = $room.querySelector("#msg");
+
+  $roomMsgForm.addEventListener("submit", handleMsgSubmit);
 };
 
 // emit(이벤트 명, 객체, 콜백)
@@ -47,13 +55,14 @@ const handleRoomSubmit = (e) => {
 };
 
 $form.addEventListener("submit", handleRoomSubmit);
+$roomNickNameForm.addEventListener("submit", handleNickNameSubmit);
 
-socket.on("welcome", () => {
-  addMsg("Someone Joined!");
+socket.on("welcome", (newUser) => {
+  addMsg(`${newUser} Joined!`);
 });
 
-socket.on("bye", () => {
-  addMsg("Someone left!");
+socket.on("bye", (leftUser) => {
+  addMsg(`${leftUser} left...`);
 });
 
 socket.on("new_msg", addMsg);
