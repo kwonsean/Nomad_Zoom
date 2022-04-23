@@ -8,7 +8,11 @@ html(lang="en")
     link(rel="stylesheet" href="https://unpkg.com/mvp.css")
   body 
     header 
-      h1 Noom 
+      div#myStream
+        h1 Noom 
+        button#mute Mute
+        button#camera Turn Camera ON
+        select#cameras 
     main 
      video#myFace(autoplay, playsinline, width='400', height='400')
     script(src="/socket.io/socket.io.js") 
