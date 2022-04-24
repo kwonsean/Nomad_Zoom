@@ -14,7 +14,8 @@ app.use("/public", express.static(__dirname + "/public"));
 app.get("/", (req, res) => res.render("home"));
 app.get("/*", (req, res) => res.redirect("/"));
 
-const handleListen = () => console.log("http://localhost:3000", "ws://localhost:3000");
+const handleListen = () =>
+  console.log("http://localhost:3000", "ws://localhost:3000");
 
 const httpServer = http.createServer(app);
 // const webSocketServer = new WebSocket.Server({ httpServer });
@@ -52,26 +53,24 @@ function countRoom(roomName) {
   return io.sockets.adapter.rooms.get(roomName)?.size;
 }
 
-// socket.io를 사용하여 이벤트 커스텀이 가능하고 객체를 받을수 있다.
-// 또한 함수를 받아서 실행시킬 수 있다. (프론트에서 실행됨)
 io.on("connection", (socket) => {
-  socket.nickName = "Anon";
-  socket.onAny((event) => {
-    console.log(io.sockets.adapter);
-    console.log("Socket Event: " + event);
+  socket.on("join_room", (roomName) => {
+    socket.join(roomName);
+    socket.to(roomName).emit("welcome");
   });
 
-  socket.on("enter_room", (roomName, done) => {
-    socket.join(roomName);
-    socket.to(roomName).emit("welcome", socket.nickName, countRoom(roomName)); // 본인에게는 안보임
-    // console.log(socket.rooms);
-    done(); // 프론트에서 실행됨 (백엔드에서 실행되는 것은 보안문제 발생)
+  socket.on("offer", (roomName, offer) => {
+    socket.to(roomName).emit("offer", offer);
+  });
 
-    io.sockets.emit("room_change", publicRooms());
+  socket.on("answer", (roomName, answer) => {
+    socket.to(roomName).emit("answer", answer);
   });
 
   socket.on("leave_room", (roomName, done) => {
-    socket.rooms.forEach((room) => socket.to(room).emit("bye", socket.nickName, countRoom(room) - 1));
+    socket.rooms.forEach((room) =>
+      socket.to(room).emit("bye", socket.nickName, countRoom(room) - 1)
+    );
     socket.leave(roomName);
     done();
     io.sockets.emit("room_change", publicRooms());
@@ -88,7 +87,9 @@ io.on("connection", (socket) => {
 
   // socket이 연결해지 되기 전에 실행
   socket.on("disconnecting", () => {
-    socket.rooms.forEach((room) => socket.to(room).emit("bye", socket.nickName, countRoom(room) - 1));
+    socket.rooms.forEach((room) =>
+      socket.to(room).emit("bye", socket.nickName, countRoom(room) - 1)
+    );
   });
   socket.on("disconnect", () => {
     io.sockets.emit("room_change", publicRooms());
