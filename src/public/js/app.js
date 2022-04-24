@@ -7,7 +7,7 @@ const $cameraBtn = document.getElementById("camera");
 const $camerasSelect = document.getElementById("cameras");
 $call.hidden = true;
 
-let myStream, roomName, myPeerConncetion;
+let myStream, roomName, myPeerConncetion, myDataChannel;
 let muted = false;
 let cameraOff = false;
 
@@ -119,6 +119,11 @@ $welcomeForm.addEventListener("submit", handleWelcomeSubmit);
 // Socekt Code
 socket.on("welcome", async () => {
   console.log("someone joined");
+  myDataChannel = myPeerConncetion.createDataChannel("chat");
+  myDataChannel.addEventListener("message", (event) => {
+    console.log(event);
+    console.log("made data channel");
+  });
   const offer = await myPeerConncetion.createOffer();
   myPeerConncetion.setLocalDescription(offer);
   console.log("sent the Offer");
@@ -127,6 +132,11 @@ socket.on("welcome", async () => {
 
 socket.on("offer", async (offer) => {
   console.log("received the Offer");
+  myPeerConncetion.addEventListener("datachannel", (event) => {
+    console.log(event);
+    myDataChannel = event.channel;
+    myDataChannel.addEventListener("message", console.log);
+  });
   myPeerConncetion.setRemoteDescription(offer);
   const answer = await myPeerConncetion.createAnswer();
   myPeerConncetion.setLocalDescription(answer);
