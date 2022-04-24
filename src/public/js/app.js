@@ -81,6 +81,13 @@ const handleCameraClick = () => {
 
 const handleCamerChange = async () => {
   await getMedia($camerasSelect.value);
+  if (myPeerConncetion) {
+    const videoTrack = myStream.getVideoTracks()[0];
+    const videoSender = myPeerConncetion
+      .getSenders()
+      .find((sender) => sender.track.kind === "video");
+    videoSender.replaceTrack(videoTrack);
+  }
 };
 
 $muteBtn.addEventListener("click", handleMuteClick);
@@ -114,24 +121,62 @@ socket.on("welcome", async () => {
   console.log("someone joined");
   const offer = await myPeerConncetion.createOffer();
   myPeerConncetion.setLocalDescription(offer);
+  console.log("sent the Offer");
   socket.emit("offer", roomName, offer);
 });
 
 socket.on("offer", async (offer) => {
+  console.log("received the Offer");
   myPeerConncetion.setRemoteDescription(offer);
   const answer = await myPeerConncetion.createAnswer();
   myPeerConncetion.setLocalDescription(answer);
   socket.emit("answer", roomName, answer);
+  console.log("sent the Answer");
 });
 
 socket.on("answer", (answer) => {
+  console.log("received the Answer");
   myPeerConncetion.setRemoteDescription(answer);
+});
+
+socket.on("ice", (ice) => {
+  console.log("received candidate");
+  myPeerConncetion.addIceCandidate(ice);
 });
 
 // RTC Code
 function makeConnection() {
-  myPeerConncetion = new RTCPeerConnection();
+  myPeerConncetion = new RTCPeerConnection({
+    iceServers: [
+      {
+        urls: [
+          "stun:stun.l.google.com:19302",
+          "stun:stun1.l.google.com:19302",
+          "stun:stun2.l.google.com:19302",
+          "stun:stun3.l.google.com:19302",
+          "stun:stun4.l.google.com:19302",
+        ],
+      },
+    ],
+  });
+  myPeerConncetion.addEventListener("icecandidate", handleIce);
+  myPeerConncetion.addEventListener("addstream", handleAddStream);
   myStream
     .getTracks()
     .forEach((track) => myPeerConncetion.addTrack(track, myStream));
+}
+
+function handleIce(data) {
+  console.log("send ice candidate");
+  socket.emit("ice", roomName, data.candidate);
+  console.log(data);
+}
+
+function handleAddStream(data) {
+  const $peersFace = document.getElementById("peersFace");
+  $peersFace.srcObject = data.stream;
+  console.log("got an evnet from my peer");
+  console.log(data);
+  console.log("peer's stream", data.stream);
+  console.log("my stream", myStream);
 }

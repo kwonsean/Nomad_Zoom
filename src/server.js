@@ -67,6 +67,10 @@ io.on("connection", (socket) => {
     socket.to(roomName).emit("answer", answer);
   });
 
+  socket.on("ice", (roomName, ice) => {
+    socket.to(roomName).emit("ice", ice);
+  });
+
   socket.on("leave_room", (roomName, done) => {
     socket.rooms.forEach((room) =>
       socket.to(room).emit("bye", socket.nickName, countRoom(room) - 1)
